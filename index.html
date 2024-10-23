@@ -11,6 +11,19 @@
       display: flex;
       height: 100vh;
     }
+    #sidebar {
+      width: 50px;
+      background-color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
+      color: white;
+    }
+    .icon-button {
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
     #editorContainer {
       width: 50%;
       border-right: 1px solid #ccc;
@@ -26,21 +39,62 @@
       height: 90%;
       border: 1px solid #ccc;
     }
+    #shareDialog {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      z-index: 1000;
+    }
+    #shareDialog input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
+  <div id="sidebar">
+    <div id="share-btn" class="icon-button">🔗 Share</div>
+  </div>
   <div id="editorContainer">
     <div id="editor" style="height: 100%;"></div>
   </div>
-  <div id="svgContainer">
-    
+  <div id="svgContainer"></div>
+
+  <div id="overlay" onclick="closeShareDialog()"></div>
+  <div id="shareDialog">
+    <h3>Shareable Link</h3>
+    <input type="text" id="shareLink" readonly>
+    <button class="close">Close</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.min.js"></script>
+  
   <script>
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' } });
-    require(['vs/editor/editor.main'], function () {
-      var editor = monaco.editor.create(document.getElementById('editor'), {
+    let editor;
+
+    require.config({ paths: { 
+      'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs',
+      'pako': 'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min'
+    } });
+
+    require(['vs/editor/editor.main', 'pako'], function (monaco, pako) {
+      // Move the editor setup code inside this function to ensure 'pako' is loaded
+      editor = monaco.editor.create(document.getElementById('editor'), {
         value: [
           '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">',
           '  <rect width="100" height="100" style="fill:blue" />',
@@ -58,7 +112,69 @@
 
       // Initial render of the SVG from editor content
       document.getElementById('svgContainer').innerHTML = editor.getValue();
-    });
+    
+
+    // Compression and decompression functions
+    function compressAndEncodeToBase64(inputString) {
+      const compressed = pako.deflate(inputString, { to: 'string' });
+      let binaryString = '';
+      for (let i = 0; i < compressed.length; i++) {
+        binaryString += String.fromCharCode(compressed[i]);
+      }
+      return btoa(binaryString);
+    }
+
+    function decompressFromBase64(base64String) {
+      const binaryString = atob(base64String);
+      const byteArray = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        byteArray[i] = binaryString.charCodeAt(i);
+      }
+      return pako.inflate(byteArray, { to: 'string' });
+    }
+
+    function showShareDialog() {
+      const svgCode = editor.getValue();
+      const compressedCode = compressAndEncodeToBase64(svgCode);
+      const shareUrl = `${window.location.origin}${window.location.pathname}#${compressedCode}`;
+      document.getElementById('shareLink').value = shareUrl;
+      document.getElementById('shareDialog').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeShareDialog() {
+      document.getElementById('shareDialog').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    // Check if there is a hash in the URL and load it into the editor
+    window.onload = function () {
+      const hash = window.location.hash.substr(1);
+      if (hash) {
+        try {
+          const decodedCode = decompressFromBase64(hash);
+          editor.setValue(decodedCode);
+          document.getElementById('svgContainer').innerHTML = decodedCode;
+        } catch (error) {
+          alert("Failed to load SVG from the URL. The data may be corrupted.");
+        }
+      }
+
+      document.getElementById('share-btn').addEventListener( 'click', e => {
+         showShareDialog();
+      });
+      document.getElementById('overlay').addEventListener( 'click', e => {
+        closeShareDialog();
+      });      
+      [...document.getElementById('shareDialog').getElementsByClassName('close')]
+      .forEach( el => el.addEventListener( 'click', e => {
+        closeShareDialog();
+      }));      
+
+
+      
+    };
+  });
   </script>
 </body>
 </html>
