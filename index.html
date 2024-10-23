@@ -20,10 +20,40 @@
       padding-top: 20px;
       color: white;
     }
+
+    
+    #sidebar {
+      width: 50px;
+      background-color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    
     .icon-button {
       cursor: pointer;
       margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 12px;
+      text-align: center;
+      transition: color 0.3s, transform 0.3s;
     }
+
+    .icon-button:hover {
+      color: #1e90ff; 
+      transform: scale(1.1); 
+    }
+    
+    .icon-button .icon {
+      font-size: 18px; 
+      margin-bottom: 3px;
+    }
+    
     #editorContainer {
       width: 50%;
       border-right: 1px solid #ccc;
@@ -68,7 +98,10 @@
 </head>
 <body>
   <div id="sidebar">
-    <div id="share-btn" class="icon-button">🔗 Share</div>
+    <div id="share-btn" class="icon-button">
+      <div class="icon">🔗</div>
+      <div>Share</div>
+    </div>
   </div>
   <div id="editorContainer">
     <div id="editor" style="height: 100%;"></div>
