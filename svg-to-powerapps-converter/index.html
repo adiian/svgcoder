@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Apps SVG Converter</title>
+    <meta name="description" content="Power Apps SVG Converter: Seamless SVG to Power Apps Code Conversion" />
+    <link rel="canonical" href="https://svgcoder.com/svg-to-powerapps-converter/" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            resize: vertical;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .output {
+            margin-top: 20px;
+        }
+        .container {
+            display: none;
+            flex-direction: column;
+        }
+        .checkbox-container {
+            margin-top: 10px;
+        }
+        .textarea-container {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        /* Tab styles */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            background-color: #f1f1f1;
+            margin-right: 2px;
+        }
+        .tab.active {
+            background-color: white;
+            font-weight: bold;
+            border-top: 2px solid #007BFF;
+            border-left: 2px solid #007BFF;
+            border-right: 2px solid #007BFF;
+        }
+        /* Style for read-only textareas */
+        textarea[readonly] {
+            background-color: #f0f0f0;
+        }
+        /* Style for the edit checkbox */
+        .edit-checkbox {
+            position: absolute;
+            top: -25px;
+            right: 5px;
+            background-color: white;
+            padding: 2px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        /* Ensure the checkbox is always visible */
+        .edit-checkbox input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Power Apps SVG Converter</h2>
+    <div class="tab-container">
+        <div class="tab" id="tabSvgToPowerApps" onclick="setConversionMode(true)">SVG to Power Apps</div>
+        <div class="tab" id="tabPowerAppsToSvg" onclick="setConversionMode(false)">Power Apps to SVG</div>
+    </div>
+
+    <!-- SVG to Power Apps Panel -->
+    <div id="svgToPowerAppsContainer" class="container">
+        <p>Paste your SVG code below:</p>
+        <div class="textarea-container">
+            <textarea id="svgInput" placeholder="Paste SVG code here..."><svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+  <rect width="100" height="100" style="fill:blue" />
+</svg></textarea>
+            <div class="checkbox-container">
+                <label><input type="checkbox" id="useEncodeUrl" onchange="convertSVG()"> Use EncodeUrl Format</label>
+            </div>
+            <div class="checkbox-container">
+                <label><input type="checkbox" id="autoConvertSvgToPowerApps" onchange="toggleAutoConvert(this)" checked> Auto Convert</label>
+                <button onclick="convertSVG()" id="convertButtonSvgToPowerApps" style="display: none;">Convert to Power Apps Format</button>
+            </div>
+        </div>
+        <div class="output">
+            <h3>Converted Power Apps Code:</h3>
+            <div class="textarea-container">
+                <textarea id="svgOutput" readonly placeholder="Converted code will appear here..."></textarea>
+                <label class="edit-checkbox">
+                    <input type="checkbox" onclick="toggleEdit(this)"> Let me edit this
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Power Apps to SVG Panel -->
+    <div id="powerAppsToSvgContainer" class="container">
+        <p>Paste your Power Apps code below:</p>
+        <div class="textarea-container">
+            <textarea id="powerAppsInput" placeholder="Paste Power Apps code here..."></textarea>
+            <div class="checkbox-container">
+                <label><input type="checkbox" id="autoConvertPowerAppsToSvg" onchange="toggleAutoConvert(this)" checked> Auto Convert</label>
+                <button onclick="convertPowerApps()" id="convertButtonPowerAppsToSvg" style="display: none;">Convert to SVG</button>
+            </div>
+        </div>
+        <div class="output">
+            <h3>Converted SVG Code:</h3>
+            <div class="textarea-container">
+                <textarea id="powerAppsOutput" readonly placeholder="Converted SVG code will appear here..."></textarea>
+                <label class="edit-checkbox">
+                    <input type="checkbox" onclick="toggleEdit(this)"> Let me edit this
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h1>Power Apps SVG Converter</h1>
+        <h2>Power Apps SVG Converter: Seamless SVG to Power Apps Code Conversion</h2>
+
+        <p>The Power Apps SVG Converter is a free, web-based tool designed to simplify the process of converting SVG code to Power Apps format and vice versa. Ideal for developers and designers working with Microsoft Power Apps, this tool streamlines the integration of SVG graphics into your applications.</p>
+
+        <ul>Key Features:
+        
+        <li>Bidirectional Conversion: Effortlessly convert between SVG code and Power Apps code formats.</li>
+        <li>Auto Convert Functionality: Enabled by default, the auto-convert feature provides real-time conversion as you type or paste your code.</li>
+        <li>Editable Output: Easily edit the converted code with a simple toggle, allowing for quick adjustments and customization.</li>
+        <li>EncodeUrl Support: Option to use the EncodeUrl format for compatibility and enhanced functionality within Power Apps.</li>
+        <li>User-Friendly Interface: Clean and intuitive design makes the conversion process straightforward, even for beginners.        </li>
+        </ul>
+    </div>
+
+    <script>
+        let conversionToPowerApps = true;
+
+        function setConversionMode(toPowerApps) {
+            conversionToPowerApps = toPowerApps;
+            updateUI();
+            toggleAutoConvert();
+        }
+
+        function updateUI() {
+            const svgToPowerAppsContainer = document.getElementById('svgToPowerAppsContainer');
+            const powerAppsToSvgContainer = document.getElementById('powerAppsToSvgContainer');
+            const tabSvgToPowerApps = document.getElementById('tabSvgToPowerApps');
+            const tabPowerAppsToSvg = document.getElementById('tabPowerAppsToSvg');
+
+            if (conversionToPowerApps) {
+                svgToPowerAppsContainer.style.display = 'flex';
+                powerAppsToSvgContainer.style.display = 'none';
+                tabSvgToPowerApps.classList.add('active');
+                tabPowerAppsToSvg.classList.remove('active');
+            } else {
+                svgToPowerAppsContainer.style.display = 'none';
+                powerAppsToSvgContainer.style.display = 'flex';
+                tabSvgToPowerApps.classList.remove('active');
+                tabPowerAppsToSvg.classList.add('active');
+            }
+        }
+
+        function convertSVG() {
+            let inputCode = document.getElementById("svgInput").value.trim();
+            let outputCode = "";
+            let useEncodeUrl = document.getElementById("useEncodeUrl").checked;
+
+            if (useEncodeUrl) {
+                let escapedSVG = inputCode.replace(/"/g, '\'');
+                outputCode = `"data:image/svg+xml;utf8, " & EncodeUrl("${escapedSVG}")`;
+            } else {
+                let encodedSVG = encodeURIComponent(inputCode)
+                    .replace(/'/g, '%27')
+                    .replace(/"/g, '%22')
+                    .replace(/\(/g, '%28')
+                    .replace(/\)/g, '%29');
+                outputCode = `data:image/svg+xml,${encodedSVG}`;
+            }
+
+            document.getElementById("svgOutput").value = outputCode;
+            document.getElementById("powerAppsInput").value = outputCode; // Copy to hidden input
+        }
+
+        function convertPowerApps() {
+            let inputCode = document.getElementById("powerAppsInput").value.trim();
+            let outputCode = "";
+
+            if (inputCode.includes('EncodeUrl')) {
+                // Conversion for EncodeUrl format
+                let extractedCode = inputCode.match(/EncodeUrl\(\"([^\"]*)\"\)/);
+                if (extractedCode && extractedCode[1]) {
+                    let decoded = extractedCode[1].replace(/""/g, '"');
+                    outputCode = decoded;
+                } else {
+                    alert("Invalid Power Apps EncodeUrl format");
+                    return;
+                }
+            } else {
+                // Conversion for standard Power Apps format
+                let powerAppsSVG = inputCode.replace(/.*data:image\/svg\+xml,/, '');
+                outputCode = decodeURIComponent(powerAppsSVG);
+            }
+
+            document.getElementById("powerAppsOutput").value = outputCode;
+            document.getElementById("svgInput").value = outputCode; // Copy to hidden input
+        }
+
+        function copyToClipboard() {
+            let output = document.getElementById("svgOutput");
+            output.select();
+            output.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand("copy");
+            alert("Converted code copied to clipboard!");
+        }
+
+        function toggleAutoConvert(checkbox) {
+            const autoConvertSvgToPowerApps = document.getElementById('autoConvertSvgToPowerApps');
+            const autoConvertPowerAppsToSvg = document.getElementById('autoConvertPowerAppsToSvg');
+
+            // Determine the new state
+            const autoConvertChecked = checkbox ? checkbox.checked : autoConvertSvgToPowerApps.checked;
+
+            // Synchronize the checkboxes
+            autoConvertSvgToPowerApps.checked = autoConvertChecked;
+            autoConvertPowerAppsToSvg.checked = autoConvertChecked;
+
+            const convertButtonSvgToPowerApps = document.getElementById('convertButtonSvgToPowerApps');
+            const convertButtonPowerAppsToSvg = document.getElementById('convertButtonPowerAppsToSvg');
+
+            // Remove existing event listeners to prevent duplicates
+            document.getElementById('svgInput').removeEventListener('input', convertSVG);
+            document.getElementById('useEncodeUrl').removeEventListener('change', convertSVG);
+            document.getElementById('powerAppsInput').removeEventListener('input', convertPowerApps);
+
+            if (autoConvertChecked) {
+                convertButtonSvgToPowerApps.style.display = 'none';
+                convertButtonPowerAppsToSvg.style.display = 'none';
+                if (conversionToPowerApps) {
+                    document.getElementById('svgInput').addEventListener('input', convertSVG);
+                    document.getElementById('useEncodeUrl').addEventListener('change', convertSVG);
+                    // Trigger conversion immediately
+                    convertSVG();
+                } else {
+                    document.getElementById('powerAppsInput').addEventListener('input', convertPowerApps);
+                    // Trigger conversion immediately
+                    convertPowerApps();
+                }
+            } else {
+                convertButtonSvgToPowerApps.style.display = 'inline-block';
+                convertButtonPowerAppsToSvg.style.display = 'inline-block';
+            }
+        }
+
+        function toggleEdit(checkbox) {
+            const textarea = checkbox.closest('.textarea-container').querySelector('textarea');
+            if (checkbox.checked) {
+                textarea.removeAttribute('readonly');
+                textarea.focus();
+                // Optionally, remove the background color
+                textarea.style.backgroundColor = '';
+            } else {
+                textarea.setAttribute('readonly', 'readonly');
+                // Restore the background color
+                textarea.style.backgroundColor = '';
+            }
+        }
+
+        // Initialize UI
+        updateUI();
+        // Set Auto Convert to be on by default
+        document.getElementById('autoConvertSvgToPowerApps').checked = true;
+        document.getElementById('autoConvertPowerAppsToSvg').checked = true;
+        toggleAutoConvert();
+    </script>
+
+</body>
+</html>
