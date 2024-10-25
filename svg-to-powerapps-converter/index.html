@@ -91,7 +91,10 @@
   <rect width="100" height="100" style="fill:blue" />
 </svg></textarea>
             <div class="checkbox-container">
-                <label><input type="checkbox" id="useEncodeUrl" onchange="convertSVG()"> Use EncodeUrl Format</label>
+                <label>
+                    <input type="checkbox" id="useEncodeUrl" onchange="convertSVG()" checked>
+                    Use EncodeUrl Format
+                </label>
             </div>
             <div class="checkbox-container">
                 <label><input type="checkbox" id="autoConvertSvgToPowerApps" onchange="toggleAutoConvert(this)" checked> Auto Convert</label>
@@ -181,7 +184,7 @@
 
             if (useEncodeUrl) {
                 let escapedSVG = inputCode.replace(/"/g, '\'');
-                outputCode = `"data:image/svg+xml;utf8, " & EncodeUrl("${escapedSVG}")`;
+                outputCode = `"data:image/svg+xml;utf8, "&EncodeUrl("${escapedSVG}")`;
             } else {
                 let encodedSVG = encodeURIComponent(inputCode)
                     .replace(/'/g, '%27')
@@ -285,6 +288,9 @@
         document.getElementById('autoConvertSvgToPowerApps').checked = true;
         document.getElementById('autoConvertPowerAppsToSvg').checked = true;
         toggleAutoConvert();
+
+        // Trigger initial conversion with EncodeUrl enabled
+        convertSVG();
     </script>
 
 </body>
