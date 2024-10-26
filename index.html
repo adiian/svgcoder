@@ -10,7 +10,19 @@
       margin: 0;
       display: flex;
       height: 100vh;
+      overflow: hidden; /* Prevents the page from scrolling */
     }
+
+    #editorContainer {
+
+      width: 50%; /* Initial width */
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #ccc;
+      height: 100%; 
+    }
+
     #sidebar {
       width: 50px;
       background-color: #333;
@@ -53,22 +65,45 @@
       font-size: 18px; 
       margin-bottom: 3px;
     }
-    
-    #editorContainer {
-      width: 50%;
-      border-right: 1px solid #ccc;
-    }
-    #svgContainer {
-      width: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+
+    #editor {
+      height: 100%;
+    }    
+
     #svgEditor {
-      width: 90%;
-      height: 90%;
-      border: 1px solid #ccc;
+      width: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
+
+    /* Change the cursor to a resize icon on hover */
+    #resizer:hover {
+      background-color: #555;
+    }
+
+    #resizer {
+      width: 6px;
+      cursor: col-resize;
+      background-color: #333;
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+      display: flex; /* Center the indicator */
+      align-items: center;
+      justify-content: center;
+    }    
+
+    #resizer::before {
+      content: '';
+      width: 4px; /* Width of the rectangle indicator */
+      height: 100px; /* Height of the rectangle indicator */
+      background-color: #777; /* Lighter color for visibility */
+      border-radius: 2px; /* Optional: rounded corners */
+    }    
+
+
+
     #shareDialog {
       display: none;
       position: fixed;
@@ -95,6 +130,7 @@
       z-index: 999;
     }
   </style>
+  <script src="resizer.js"></script>
 </head>
 <body>
   <div id="sidebar">
@@ -104,9 +140,10 @@
     </div>
   </div>
   <div id="editorContainer">
-    <div id="editor" style="height: 100%;"></div>
+    <div id="editor"></div>
   </div>
-  <div id="svgContainer"></div>
+  <div id="resizer"></div>
+  <div id="svgEditor"></div>
 
   <div id="overlay" onclick="closeShareDialog()"></div>
   <div id="shareDialog">
@@ -118,6 +155,23 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.min.js"></script>
   
   <script>
+
+    // Save the editor content to localStorage
+    function saveToLocalStorage(content) {
+      localStorage.setItem('svgContent', content);
+    }
+
+    // Retrieve content from localStorage
+    function loadFromLocalStorage() {
+      return localStorage.getItem('svgContent') || [
+        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">',
+        '  <rect width="100" height="100" style="fill:blue" />',
+        '</svg>'
+      ].join('\n');
+    }
+
+
+
     let editor;
 
     require.config({ paths: { 
@@ -128,11 +182,7 @@
     require(['vs/editor/editor.main', 'pako'], function (monaco, pako) {
       // Move the editor setup code inside this function to ensure 'pako' is loaded
       editor = monaco.editor.create(document.getElementById('editor'), {
-        value: [
-          '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">',
-          '  <rect width="100" height="100" style="fill:blue" />',
-          '</svg>'
-        ].join('\n'),
+        value: loadFromLocalStorage(),
         language: 'xml',
         theme: 'vs-dark',
       });
@@ -140,12 +190,28 @@
       // Listen for changes in the editor and update the SVG editor
       editor.onDidChangeModelContent(function () {
         var svgCode = editor.getValue();
-        document.getElementById('svgContainer').innerHTML = svgCode;
+        document.getElementById('svgEditor').innerHTML = svgCode;
+
+        saveToLocalStorage(svgCode); // Save to localStorage
+
       });
 
       // Initial render of the SVG from editor content
-      document.getElementById('svgContainer').innerHTML = editor.getValue();
+      document.getElementById('svgEditor').innerHTML = editor.getValue();
     
+      // Function to resize the Monaco Editor properly
+      function resizeMonacoEditor() {
+        editor.layout(); // Recalculate the editor layout based on the container's new size
+      }
+
+
+      // Trigger the initial resize of the Monaco Editor on load
+      resizeMonacoEditor();
+      
+      // Optionally, handle window resize as well
+      window.addEventListener('resize', resizeMonacoEditor);      
+      window.addEventListener('resizer-update', resizeMonacoEditor);
+
 
     // Compression and decompression functions
     function compressAndEncodeToBase64(inputString) {
